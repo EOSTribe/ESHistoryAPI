@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from elasticsearch import Elasticsearch
 
 app = Flask(__name__)
@@ -9,11 +9,22 @@ client = Elasticsearch([{'host': 'api3.eostribe.io', 'port': '9200'}])
 
 @app.route('/v1/history/get_transaction', methods=['POST'])
 def get_transaction():
-    request_transaction = request.get_json().get('id')
-    return jsonify(req_transaction(request_transaction))
+
+    transaction_id = request.get_json(force=True).get('id')
+
+    if len(transaction_id) != 64:
+        return abort(404)
 
 
-def req_transaction(transaction_id):
+    seeking_result = seeking_transaction(transaction_id)
+
+    if seeking_result == None:
+        return abort(404)
+
+    return jsonify(seeking_result)
+
+
+def seeking_transaction(transaction_id):
     resp = client.search(index='transaction_traces', body={
         "query":
             {"match":
@@ -22,7 +33,9 @@ def req_transaction(transaction_id):
         }
     })
     print("Found %d messages" % resp['hits']['total'])
-    #receipt":{"status":"executed","cpu_usage_us":705,"net_usage_words":38},
+
+    if int(resp['hits']['total']) == 0:
+        return None
 
     for field in resp['hits']['hits']:
         print("Sender: %s\n    Subject: %s" % (field['_source']['block_num'], field['_source']['id']))
@@ -36,21 +49,13 @@ def req_transaction(transaction_id):
                   'block_time': field['_source']['block_time'],
                   'createAt': field['_source']['createAt'],
                   'elapsed': field['_source']['elapsed'],
+                  'net_usage': field['_source']['net_usage'],
         }
 
 
 
-    #response = resp['hits']['hits']
-
-
     return result
-    #for hit in resp['hits']['hits']:
-     #   for result in hit['_source']:
-     #       res.append(hit['_source'][result])
-    #return res
 
-    #return resp['hits']['hits'][0]['_source']
-    #return tmp_resp['_source']
 
 
 if __name__ == '__main__':
