@@ -83,7 +83,7 @@ def seeking_actions(pos, offset, account_name):
                          body={
                              "query":
                                  {"match":
-                                      {"act.name": account_name
+                                      {"act.account": account_name
                                        }
                                   },
                              "sort": [
