@@ -68,6 +68,8 @@ def get_actions():
   #      return abort(404)
     elif pos >= 0 and (1 <= math.fabs(offset) <= 1000):
         seeking_result = seeking_actions(pos, int( math.fabs(offset)), account_name)
+    elif pos == -1 and (1 <= math.fabs(offset) <= 1000):
+        seeking_result = seeking_actions(0 , int( math.fabs(offset)), account_name)
     else:
         return abort(404)
         #seeking_result = seeking_actions(pos, offset, account_name)
@@ -98,7 +100,7 @@ def seeking_actions(pos, offset, account_name):
     for field in resp['hits']['hits']:
         result.append(field['_source'])
 
-    return result
+    return {"actions":result}
 
 
 
