@@ -6,4 +6,4 @@ services:
         - "8800:8000"
     restart: on-failure
     volumes:
-        - .:/src
+        - .:/src/get_transaction

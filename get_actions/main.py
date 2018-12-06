@@ -66,7 +66,7 @@ def get_actions():
         return abort(404)
  #   elif math.fabs(pos) <  math.fabs(offset):
   #      return abort(404)
-    elif pos >= 0 and (1 <= math.fabs(offset) <= 1000):
+    elif pos > 0 and (1 <= math.fabs(offset) <= 1000):
         seeking_result = seeking_actions(pos, int( math.fabs(offset)), account_name)
     elif pos == -1 and (1 <= math.fabs(offset) <= 1000):
         seeking_result = seeking_actions(0 , int( math.fabs(offset)), account_name)
