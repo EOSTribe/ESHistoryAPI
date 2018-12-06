@@ -1,9 +1,14 @@
 version: '3'
 services:
-  api:
-    build: ./
+  get_transaction:
+    build: ./get_transaction
+    environment:
+       - ELASTIC_HOST= ${ELASTIC_HOST}
+       - ELASTIC_PORT= ${ELASTIC_PORT}
+    env_file:
+        - ./.env
     ports:
         - "8800:8000"
     restart: on-failure
     volumes:
-        - .:/src/get_transaction
+        - .:/src

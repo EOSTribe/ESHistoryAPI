@@ -1,9 +1,16 @@
 from flask import Flask, jsonify, request, abort
 from elasticsearch import Elasticsearch
-
+import os
+import sys
 app = Flask(__name__)
 
-client = Elasticsearch([{'host': '10.0.64.25', 'port': '9200'}])
+#ELASTIC_HOST = os.environ('ELASTIC_HOST')
+#ELASTIC_PORT = os.environ('ELASTIC_PORT')
+
+ELASTIC_HOST = 'api3.eostribe.io'
+ELASTIC_PORT = '9200'
+
+client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
 
 @app.route('/v1/history/get_transaction', methods=['POST'])
