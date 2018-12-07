@@ -5,49 +5,7 @@ import math
 app = Flask(__name__)
 
 
-client = Elasticsearch([{'host': '10.0.64.25', 'port': '9200'}])
-
-@app.route('/v1/history/get_transaction', methods=['POST'])
-def get_transaction():
-
-    transaction_id = request.get_json(force=True).get('id')
-
-    if len(transaction_id) != 64:
-        return abort(404)
-
-    seeking_result = seeking_transaction(transaction_id)
-
-    if seeking_result is None:
-        return abort(404)
-
-    return jsonify(seeking_result)
-
-def seeking_transaction(transaction_id):
-    resp = client.search(index='transaction_traces', body={
-        "query":
-            {"match":
-                 {"id": transaction_id
-            }
-        }
-    })
-    # print("Found %d messages" % resp['hits']['total'])
-
-    if int(resp['hits']['total']) == 0:
-        return None
-
-    for field in resp['hits']['hits']:
-        result = {'id':field['_source']['id'],
-                  'receipt': field['_source']['receipt'],
-                  'producer_block_id': field['_source']['producer_block_id'],
-                  'action_traces': field['_source']['action_traces'],
-                  'block_num': field['_source']['block_num'],
-                  'block_time': field['_source']['block_time'],
-                  'createAt': field['_source']['createAt'],
-                  'elapsed': field['_source']['elapsed'],
-                  'net_usage': field['_source']['net_usage'],
-        }
-
-    return result
+client = Elasticsearch([{'host': 'api3.eostribe.io', 'port': '9200'}])
 
 @app.route('/v1/history/get_actions', methods=['POST'])
 def get_actions():
@@ -62,14 +20,9 @@ def get_actions():
         return abort(404)
     elif pos == -1 and offset == -1:
         seeking_result = seeking_actions(0, 1, account_name)
-    elif pos < -1 :
-        return abort(404)
- #   elif math.fabs(pos) <  math.fabs(offset):
-  #      return abort(404)
-    elif pos > 0 and (1 <= math.fabs(offset) <= 1000):
-        seeking_result = seeking_actions(pos, int( math.fabs(offset)), account_name)
-    elif pos == -1 and (1 <= math.fabs(offset) <= 1000):
-        seeking_result = seeking_actions(0 , int( math.fabs(offset)), account_name)
+    elif pos <= -1 and (1 <= math.fabs(offset) <= 1000):
+        pos = int( math.fabs(pos))+1
+        seeking_result = seeking_actions(pos , int( math.fabs(offset)), account_name)
     else:
         return abort(404)
         #seeking_result = seeking_actions(pos, offset, account_name)
