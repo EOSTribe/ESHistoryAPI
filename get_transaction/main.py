@@ -1,14 +1,12 @@
 from flask import Flask, jsonify, request, abort
 from elasticsearch import Elasticsearch
 import os
-import sys
+
 app = Flask(__name__)
 
-#ELASTIC_HOST = os.environ('ELASTIC_HOST')
-#ELASTIC_PORT = os.environ('ELASTIC_PORT')
+ELASTIC_HOST = os.environ['ELASTIC_HOST']
+ELASTIC_PORT = os.environ['ELASTIC_PORT']
 
-ELASTIC_HOST = 'api3.eostribe.io'
-ELASTIC_PORT = '9200'
 
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
@@ -36,7 +34,6 @@ def seeking_transaction(transaction_id):
             }
         }
     })
-    # print("Found %d messages" % resp['hits']['total'])
 
     if int(resp['hits']['total']) == 0:
         return None
@@ -56,3 +53,4 @@ def seeking_transaction(transaction_id):
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5500, debug=True)
+    app.config['JSON_AS_ASCII'] = False

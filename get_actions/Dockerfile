@@ -5,4 +5,4 @@ RUN pip3 install -r /tmp/requirements.txt
 
 WORKDIR /src/get_actions
 
-CMD ["gunicorn", "-w 4",  "main:app"]
+CMD ["gunicorn", "--reload", "-c", "config.py",  "main:app"]
