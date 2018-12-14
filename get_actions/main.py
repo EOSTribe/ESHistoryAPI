@@ -59,7 +59,7 @@ def seeking_actions(pos, offset, account_name):
                              "sort": [
                                  {"_id": {"order": sortOrder}}
                              ],
-                             "timeout": '6s'
+                             "timeout": '10s'
                          })
     if len(resp) == 0:
         return None
@@ -84,7 +84,7 @@ def seeking_actions(account_name):
                              "sort": [
                                  {"_id": {"order": "desc"}}
                              ],
-                             "timeout": '8s'
+                             "timeout": '10s'
                          })
     if len(resp) == 0:
         return None
