@@ -23,7 +23,7 @@ def get_transaction():
     if seeking_result is None:
         return abort(404)
 
-    return jsonify(seeking_result)
+    return seeking_result
 
 def seeking_transaction(transaction_id):
     resp = client.search(index='transaction_traces', body={
