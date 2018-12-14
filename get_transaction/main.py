@@ -4,16 +4,14 @@ import os
 import sys
 app = Flask(__name__)
 
-#ELASTIC_HOST = os.environ('ELASTIC_HOST')
-#ELASTIC_PORT = os.environ('ELASTIC_PORT')
+ELASTIC_HOST = os.environ('ELASTIC_HOST')
+ELASTIC_PORT = os.environ('ELASTIC_PORT')
 
-ELASTIC_HOST = 'api3.eostribe.io'
-ELASTIC_PORT = '9200'
 
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
 
-@app.route('/v1/history/get_transaction', methods=['POST'])
+@app.route('/v2/history/get_transaction', methods=['POST'])
 def get_transaction():
 
     transaction_id = request.get_json(force=True).get('id')

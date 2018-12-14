@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 client = Elasticsearch([{'host': 'api3.eostribe.io', 'port': '9200'}])
 
-@app.route('/v1/history/get_actions', methods=['POST'])
+@app.route('/v2/history/get_actions', methods=['POST'])
 def get_actions():
 
     pos = request.get_json(force=True).get('pos')
