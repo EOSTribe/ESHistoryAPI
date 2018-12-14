@@ -1,11 +1,14 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import math
+import os
 
 app = Flask(__name__)
 
+ELASTIC_HOST = os.environ['ELASTIC_HOST']
+ELASTIC_PORT = os.environ['ELASTIC_PORT']
 
-client = Elasticsearch([{'host': 'api3.eostribe.io', 'port': '9200'}])
+client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
 @app.route('/v2/history/get_actions', methods=['POST'])
 def get_actions():
@@ -16,16 +19,12 @@ def get_actions():
 
     account_name =request.get_json(force=True).get('account_name')
 
-    if not isinstance(pos, int) or not isinstance(offset, int):
+    if isinstance(account_name, str) and ( pos == None and offset == None):
+        seeking_result = seeking_actions(account_name)
+    elif not isinstance(pos, int) or not isinstance(offset, int):
         return abort(404)
-    elif pos == -1 and offset == -1:
-        seeking_result = seeking_actions(0, 1, account_name)
-    elif pos <= -1 and (1 <= math.fabs(offset) <= 1000):
-        pos = int( math.fabs(pos))+1
-        seeking_result = seeking_actions(pos , int( math.fabs(offset)), account_name)
     else:
-        return abort(404)
-        #seeking_result = seeking_actions(pos, offset, account_name)
+         seeking_result = seeking_actions(pos, offset, account_name)
 
     if seeking_result is None:
         return abort(404)
@@ -33,6 +32,22 @@ def get_actions():
     return jsonify(seeking_result)
 
 def seeking_actions(pos, offset, account_name):
+
+    if pos == -1 and offset == -1:
+        pos = 0
+        offset = 1
+        sortOrder = 'desc'
+
+    elif pos <= -1 and  offset <= 0 :
+        pos = int( math.fabs(pos))-1
+        offset = int( math.fabs(offset))
+        sortOrder = 'desc'
+    elif 0 <= pos and 0 <= offset:
+        sortOrder = 'asc'
+    else: return None
+
+
+
     resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
                          size=offset, from_=pos,
                          body={
@@ -42,8 +57,34 @@ def seeking_actions(pos, offset, account_name):
                                        }
                                   },
                              "sort": [
-                                 {"block_num": {"order": "desc"}}
-                             ]
+                                 {"_id": {"order": sortOrder}}
+                             ],
+                             "timeout": '6s'
+                         })
+    if len(resp) == 0:
+        return None
+
+    result = []
+
+    for field in resp['hits']['hits']:
+        result.append(field['_source'])
+
+    return {"actions":result}
+
+def seeking_actions(account_name):
+    resp = client.search(index='new_action_traces', filter_path=['hits.hits._*'],
+                         body={
+                             "query":
+                                 {"multi_match":
+                                     {
+                                         "query": account_name,
+                                         "fields": ["act.account", "act.data", "receipt.receiver"]
+                                     }
+                                },
+                             "sort": [
+                                 {"_id": {"order": "desc"}}
+                             ],
+                             "timeout": '8s'
                          })
     if len(resp) == 0:
         return None
@@ -60,3 +101,4 @@ def seeking_actions(pos, offset, account_name):
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5500, debug=True)
+    app.config['JSON_AS_ASCII'] = False
