@@ -1,6 +1,8 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, Response, request, abort
 from elasticsearch import Elasticsearch
 import os
+import json
+
 
 app = Flask(__name__)
 
@@ -23,7 +25,9 @@ def get_transaction():
     if seeking_result is None:
         return abort(404)
 
-    return seeking_result
+    json_string = json.dumps(seeking_result, ensure_ascii=False)
+    response = Response(json_string, content_type="application/json; charset=utf-8")
+    return response
 
 def seeking_transaction(transaction_id):
     resp = client.search(index='transaction_traces', body={

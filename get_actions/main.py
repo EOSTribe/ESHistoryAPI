@@ -1,13 +1,13 @@
 from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import math
+import json
 import os
 
 app = Flask(__name__)
 
 ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
-
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
 @app.route('/v2/history/get_actions', methods=['POST'])
@@ -29,7 +29,9 @@ def get_actions():
     if seeking_result is None:
         return abort(404)
 
-    return jsonify(seeking_result)
+    json_string = json.dumps(seeking_result,ensure_ascii = False)
+    response = Response(json_string, content_type="application/json; charset=utf-8")
+    return response
 
 def seeking_actions(pos, offset, account_name):
 
@@ -45,8 +47,6 @@ def seeking_actions(pos, offset, account_name):
     elif 0 <= pos and 0 <= offset:
         sortOrder = 'asc'
     else: return None
-
-
 
     resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
                          size=offset, from_=pos,
@@ -72,27 +72,32 @@ def seeking_actions(pos, offset, account_name):
     return {"actions":result}
 
 def seeking_actions(account_name):
-    resp = client.search(index='new_action_traces', filter_path=['hits.hits._*'],
+    resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
                          body={
                              "query":
                                  {"multi_match":
                                      {
                                          "query": account_name,
-                                         "fields": ["act.account", "act.data", "receipt.receiver"]
+                                         "fields": ["act.account", "receipt.receiver"]
                                      }
                                 },
                              "sort": [
                                  {"_id": {"order": "desc"}}
                              ],
-                             "timeout": '10s'
+                             "timeout": '15s'
                          })
     if len(resp) == 0:
         return None
 
     result = []
 
+
     for field in resp['hits']['hits']:
-        result.append(field['_source'])
+
+        result.append(
+            field['_source']
+        )
+
 
     return {"actions":result}
 
