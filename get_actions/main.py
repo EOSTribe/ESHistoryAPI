@@ -24,7 +24,7 @@ def get_actions():
     elif not isinstance(pos, int) or not isinstance(offset, int):
         return abort(404)
     else:
-         seeking_result = seeking_actions(pos, offset, account_name)
+         seeking_result = seeking_actions(account_name,pos = pos, offset = offset )
 
     if seeking_result is None:
         return abort(404)
@@ -33,13 +33,22 @@ def get_actions():
     response = Response(json_string, content_type="application/json; charset=utf-8")
     return response
 
-def seeking_actions(pos, offset, account_name):
+def seeking_actions(account_name, **kwargs):
+    if kwargs.get('pos') == None:
+        pos = None
+        offset = None
+    else:
+        pos = kwargs.get('pos')
+        offset = kwargs.get('offset')
 
-    if pos == -1 and offset == -1:
+    if pos == None and offset == None:
+        sortOrder = 'desc'
+        pos = 0
+        offset = 10
+    elif pos == -1 and offset == -1:
         pos = 0
         offset = 1
         sortOrder = 'desc'
-
     elif pos <= -1 and  offset <= 0 :
         pos = int( math.fabs(pos))-1
         offset = int( math.fabs(offset))
@@ -52,10 +61,12 @@ def seeking_actions(pos, offset, account_name):
                          size=offset, from_=pos,
                          body={
                              "query":
-                                 {"match":
-                                      {"act.account": account_name
-                                       }
-                                  },
+                                 {"multi_match":
+                                                                       {
+                                                                           "query": account_name,
+                                                                           "fields": ["act.account", "receipt.receiver", "act.data"]
+                                                                       }
+                                                                  },
                              "sort": [
                                  {"_id": {"order": sortOrder}}
                              ],
@@ -70,38 +81,6 @@ def seeking_actions(pos, offset, account_name):
         result.append(field['_source'])
 
     return {"actions":result}
-
-def seeking_actions(account_name):
-    resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
-                         body={
-                             "query":
-                                 {"multi_match":
-                                     {
-                                         "query": account_name,
-                                         "fields": ["act.account", "receipt.receiver"]
-                                     }
-                                },
-                             "sort": [
-                                 {"_id": {"order": "desc"}}
-                             ],
-                             "timeout": '15s'
-                         })
-    if len(resp) == 0:
-        return None
-
-    result = []
-
-
-    for field in resp['hits']['hits']:
-
-        result.append(
-            field['_source']
-        )
-
-
-    return {"actions":result}
-
-
 
 
 if __name__ == '__main__':
