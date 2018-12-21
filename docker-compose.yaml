@@ -18,3 +18,12 @@ services:
     restart: on-failure
     volumes:
         - .:/src
+get_key_accounts:
+    build: ./get_key_accounts
+    env_file:
+        - ./config/.env
+    ports:
+        - "8870:8000"
+    restart: on-failure
+    volumes:
+        - .:/src
