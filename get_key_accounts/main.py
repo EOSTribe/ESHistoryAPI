@@ -11,7 +11,7 @@ ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
 @app.route('/v2/history/get_key_accounts', methods=['POST'])
-def get_actions():
+def get_key_accounts():
 
     public_key = request.get_json(force=True).get('public_key')
 
@@ -33,7 +33,7 @@ def seeking_actions(public_key):
                          body={
                              "query":
                                  {"match":
-                                      {"id": public_key
+                                      {"pub_keys.key": public_key
                                        }
                                   }
                          })
@@ -43,11 +43,9 @@ def seeking_actions(public_key):
     result = []
 
     for field in resp['hits']['hits']:
-        result.append(field['_source'])
+        result.append(field['_source']['name'])
 
-
-
-    return {"actions":result}
+    return {"account_names":result}
 
 
 if __name__ == '__main__':
