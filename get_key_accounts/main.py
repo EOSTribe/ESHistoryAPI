@@ -43,9 +43,7 @@ def seeking_actions(public_key):
     result = []
 
     for field in resp['hits']['hits']:
-        data = json.loads(field['_source']['act']['data'])
-        json_string = json.dumps(data)
-        print(json_string)
+        result.append(field['_source'])
 
 
 
