@@ -53,6 +53,10 @@ def seeking_actions(account_name, **kwargs):
         pos = int( math.fabs(pos))-1
         offset = int( math.fabs(offset))
         sortOrder = 'desc'
+    elif pos == 0 and offset ==0:
+        sortOrder = 'asc'
+        pos = 0
+        offset = 1
     elif 0 <= pos and 0 <= offset:
         sortOrder = 'asc'
     else: return None
