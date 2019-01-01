@@ -11,7 +11,7 @@ ELASTIC_PORT = os.environ['ELASTIC_PORT']
 
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-
+@app.route('/v1/history/get_transaction', methods=['POST'])
 @app.route('/v2/history/get_transaction', methods=['POST'])
 def get_transaction():
 
