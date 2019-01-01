@@ -10,6 +10,7 @@ ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
+@app.route('/v1/history/get_actions', methods=['POST'])
 @app.route('/v2/history/get_actions', methods=['POST'])
 def get_actions():
 
@@ -20,7 +21,7 @@ def get_actions():
     account_name =request.get_json(force=True).get('account_name')
 
     if isinstance(account_name, str) and ( pos == None and offset == None):
-        seeking_result = seeking_actions(account_name)
+        seeking_result = seeking_actions_account_name(account_name)
     elif not isinstance(pos, int) or not isinstance(offset, int):
         return abort(404)
     else:
@@ -32,6 +33,31 @@ def get_actions():
     json_string = json.dumps(seeking_result,ensure_ascii = False)
     response = Response(json_string, content_type="application/json; charset=utf-8")
     return response
+
+def seeking_actions_account_name(account_name):
+    resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
+         body={
+            "query": {
+            "bool": {
+             "must": [
+                {"multi_match":
+                    {"query": account_name,
+                "fields": ["act.account", "receipt.receiver", "act.data"]
+                    }}],
+                "filter": [
+                {"range": { "block_time": {"gte": "now-7d/d", "lt": "now/d"}}}
+                    ]
+                }}})
+
+    if len(resp) == 0:
+        return None
+
+    result = []
+
+    for field in resp['hits']['hits']:
+        result.append(field['_source'])
+
+    return {"actions": result}
 
 def seeking_actions(account_name, **kwargs):
     if kwargs.get('pos') == None:
