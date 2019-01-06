@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import math
@@ -23,21 +24,29 @@ def get_actions():
 
     last_days = request.get_json(force=True).get('last_days')
 
-    if isinstance(account_name, str) and ( pos == None and offset == None and last_days == None):
-        seeking_result = seeking_actions_account_name(account_name)
-    elif account_name != None and last_days != None:
+    from_date =  request.get_json(force=True).get('from_date')
+
+    to_date =  request.get_json(force=True).get('to_date')
+
+    if account_name == None:
+        return 404
+    elif last_days != None:
         seeking_result = seeking_actions_last_days(account_name, str(last_days))
+    elif from_date != None and to_date != None:
+        seeking_result = seeking_actions_to_from(account_name,from_date,to_date)
     elif not isinstance(pos, int) or not isinstance(offset, int):
         return abort(404)
+    elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
+        seeking_result = seeking_actions_account_name(account_name)
     else:
          seeking_result = seeking_actions(account_name,pos = pos, offset = offset )
-
     if seeking_result is None:
         return abort(404)
 
     json_string = json.dumps(seeking_result,ensure_ascii = False)
     response = Response(json_string, content_type="application/json; charset=utf-8")
     return response
+
 
 def seeking_actions_account_name(account_name):
     resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
@@ -145,6 +154,48 @@ def seeking_actions(account_name, **kwargs):
         result.append(field['_source'])
 
     return {"actions":result}
+
+def seeking_actions_to_from(account_name, from_date, to_date):
+
+    if isinstance(from_date, int):
+        es_from_date = datetime.datetime.utcfromtimestamp(from_date).strftime('%Y-%m-%dT%H:%M:%SZ')
+    else:
+        es_from_date = from_date
+    if isinstance(to_date, int):
+        es_to_date = datetime.datetime.utcfromtimestamp(to_date).strftime('%Y-%m-%dT%H:%M:%SZ')
+    else:
+        es_to_date = to_date
+
+    resp = client.search(index='action_traces', filter_path=['hits.hits._*'], size = 10000,
+                         body={
+                             "query": {
+                                 "bool": {
+                                     "must": [
+                                         {"multi_match":
+                                              {"query": account_name,
+                                               "fields": ["act.account", "receipt.receiver", "act.data"]
+                                               }}],
+                                     "filter": [
+                                         {"range": {"block_time": {"gte": es_from_date, "lt": es_to_date}}}
+                                     ]
+                                 }},
+                             "sort": [
+                                 {"block_time": {"order": "desc"}}
+                             ],
+                             "timeout": "20s"
+                         }
+                         )
+
+    if len(resp) == 0:
+        return None
+
+    result = []
+
+    for field in resp['hits']['hits']:
+        result.append(field['_source'])
+
+    return {"actions": result}
+
 
 
 if __name__ == '__main__':
