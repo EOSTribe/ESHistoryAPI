@@ -34,8 +34,6 @@ def get_actions():
         seeking_result = seeking_actions_last_days(account_name, str(last_days))
     elif from_date != None and to_date != None:
         seeking_result = seeking_actions_to_from(account_name,from_date,to_date)
-    elif not isinstance(pos, int) or not isinstance(offset, int):
-        return abort(404)
     elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
         seeking_result = seeking_actions_account_name(account_name)
     else:
