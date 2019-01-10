@@ -30,7 +30,8 @@ def get_transaction():
     return response
 
 def seeking_transaction(transaction_id):
-    resp = client.search(index='transaction_traces', body={
+    resp = client.search(index='transaction_traces', filter_path=['hits.hits._*'],
+     body={
         "query":
             {"match":
                  {"id": transaction_id
@@ -38,21 +39,14 @@ def seeking_transaction(transaction_id):
         }
     })
 
-    if int(resp['hits']['total']) == 0:
+    if len(resp) == 0:
         return None
 
+    result = []
+
     for field in resp['hits']['hits']:
-        result = {'id':field['_source']['id'],
-                  'receipt': field['_source']['receipt'],
-                  'producer_block_id': field['_source']['producer_block_id'],
-                  'action_traces': field['_source']['action_traces'],
-                  'block_num': field['_source']['block_num'],
-                  'block_time': field['_source']['block_time'],
-                  'createAt': field['_source']['createAt'],
-                  'elapsed': field['_source']['elapsed'],
-                  'net_usage': field['_source']['net_usage']
-        }
-        return result
+        result.append(field['_source'])
+    return result
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5500, debug=True)
