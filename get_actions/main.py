@@ -47,7 +47,7 @@ def get_actions():
 
 
 def seeking_actions_account_name(account_name):
-    resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
+    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'], size = 10000,
          body={"query":
                     {"multi_match":
                       {
@@ -58,7 +58,7 @@ def seeking_actions_account_name(account_name):
                     "sort": [
                       {"block_time": {"order": "desc"}}
                       ],
-                    "timeout": '20s'
+                    "timeout": '10s'
                     }
                 )
 
@@ -73,7 +73,7 @@ def seeking_actions_account_name(account_name):
     return {"actions": result}
 
 def seeking_actions_last_days(account_name, last_days):
-    resp = client.search(index='action_traces', filter_path=['hits.hits._*'], size = 10000,
+    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'], size = 10000,
                          body={
                              "query": {
                                  "bool": {
@@ -86,6 +86,9 @@ def seeking_actions_last_days(account_name, last_days):
                                          {"range": {"block_time": {"gte": "now-"+last_days+"d/d", "lt": "now/d"}}}
                                      ]
                                  }},
+                             "sort": [
+                                 {"block_time": {"order": "asc"}}
+                             ],
                              "timeout": '20s'
                          }
                          )
@@ -128,7 +131,7 @@ def seeking_actions(account_name, **kwargs):
         sortOrder = 'asc'
     else: return None
 
-    resp = client.search(index='action_traces', filter_path=['hits.hits._*'],
+    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'],
                          size=offset, from_=pos,
                          body={
                              "query":
@@ -164,7 +167,7 @@ def seeking_actions_to_from(account_name, from_date, to_date):
     else:
         es_to_date = to_date
 
-    resp = client.search(index='action_traces', filter_path=['hits.hits._*'], size = 10000,
+    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'], size = 10000,
                          body={
                              "query": {
                                  "bool": {
