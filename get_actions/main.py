@@ -37,7 +37,7 @@ def get_actions():
     elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
         seeking_result = seeking_actions_account_name(account_name)
     else:
-         seeking_result = seeking_actions(account_name,pos = pos, offset = offset )
+         seeking_result = seeking_actions(account_name,pos,offset)
     if seeking_result is None:
         return abort(404)
 
@@ -52,7 +52,7 @@ def seeking_actions_account_name(account_name):
                     {"multi_match":
                       {
                       "query": account_name,
-                      "fields": ["act.account", "receipt.receiver", "act.data"]
+                      "fields": ["act.authorization.actor"]
                       }
                     },
                     "sort": [
@@ -80,7 +80,7 @@ def seeking_actions_last_days(account_name, last_days):
                                      "must": [
                                          {"multi_match":
                                               {"query": account_name,
-                                               "fields": ["act.account", "receipt.receiver", "act.data"]
+                                               "fields": ["act.authorization.actor"]
                                                }}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": "now-"+last_days+"d/d", "lt": "now/d"}}}
@@ -103,32 +103,24 @@ def seeking_actions_last_days(account_name, last_days):
 
     return {"actions": result}
 
-def seeking_actions(account_name, **kwargs):
-    if kwargs.get('pos') == None:
-        pos = None
-        offset = None
-    else:
-        pos = kwargs.get('pos')
-        offset = kwargs.get('offset')
-
-    if pos == None and offset == None:
-        sortOrder = 'desc'
-        pos = 0
-        offset = 10
-    elif pos == -1 and offset == -1:
+def seeking_actions(account_name, pos, offset):
+    if pos == -1 and offset == -1:
         pos = 0
         offset = 1
-        sortOrder = 'desc'
+        sortOrder = "desc"
+        sortColumn = "block_num"
     elif pos <= -1 and  offset <= 0 :
         pos = int( math.fabs(pos))-1
         offset = int( math.fabs(offset))
         sortOrder = 'desc'
+        sortColumn = "block_num"
     elif pos == 0 and offset ==0:
         sortOrder = 'asc'
         pos = 0
         offset = 1
     elif 0 <= pos and 0 <= offset:
         sortOrder = 'asc'
+        sortColumn = "block_num"
     else: return None
 
     resp = client.search(index='action_traces*', filter_path=['hits.hits._*'],
@@ -138,11 +130,11 @@ def seeking_actions(account_name, **kwargs):
                                  {"multi_match":
                                     {
                                        "query": account_name,
-                                        "fields": ["act.account", "receipt.receiver", "act.data"]
+                                        "fields": ["act.authorization.actor"]
                                         }
                                  },
                              "sort": [
-                                 {"_id": {"order": sortOrder}}
+                                 {sortColumn: {"order": sortOrder}}
                              ],
                              "timeout": '10s'
                          })
@@ -174,7 +166,7 @@ def seeking_actions_to_from(account_name, from_date, to_date):
                                      "must": [
                                          {"multi_match":
                                               {"query": account_name,
-                                               "fields": ["act.account", "receipt.receiver", "act.data"]
+                                               "fields": ["act.authorization.actor"]
                                                }}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": es_from_date, "lt": es_to_date}}}
