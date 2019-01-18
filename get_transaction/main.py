@@ -30,7 +30,7 @@ def get_transaction():
     return response
 
 def seeking_transaction(transaction_id):
-    resp = client.search(index='transaction_traces', filter_path=['hits.hits._*'],
+    resp = client.search(index='transaction_traces*', filter_path=['hits.hits._*'],
      body={
         "query":
             {"match":
