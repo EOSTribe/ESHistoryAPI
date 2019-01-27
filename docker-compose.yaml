@@ -5,7 +5,7 @@ services:
     env_file:
         - ./config/.env
     ports:
-        - "8800:8000"
+        - "7800:8000"
     restart: on-failure
     volumes:
         - .:/src
@@ -14,7 +14,7 @@ services:
     env_file:
         - ./config/.env
     ports:
-        - "8890:8000"
+        - "7801:8000"
     restart: on-failure
     volumes:
         - .:/src
@@ -23,7 +23,16 @@ services:
     env_file:
         - ./config/.env
     ports:
-        - "8870:8000"
+        - "7802:8000"
+    restart: on-failure
+    volumes:
+        - .:/src
+  find_actions:
+    build: ./find_actions
+    env_file:
+        - ./config/.env
+    ports:
+        - "7803:8000"
     restart: on-failure
     volumes:
         - .:/src

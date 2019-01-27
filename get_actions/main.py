@@ -15,6 +15,14 @@ client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=3
 @app.route('/v1/history/get_actions', methods=['POST'])
 @app.route('/v2/history/get_actions', methods=['POST'])
 def get_actions():
+    if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
+        ELASTIC_INDEX = "worbli_action_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
+        ELASTIC_INDEX = "bos_action_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
+        ELASTIC_INDEX = "telos_action_traces*"
+    else:
+        ELASTIC_INDEX = "action_traces*"
 
     pos = request.get_json(force=True).get('pos')
 
@@ -31,13 +39,13 @@ def get_actions():
     if account_name == None:
         return 404
     elif last_days != None:
-        seeking_result = seeking_actions_last_days(account_name, str(last_days))
+        seeking_result = seeking_actions_last_days(account_name, str(last_days), ELASTIC_INDEX)
     elif from_date != None and to_date != None:
-        seeking_result = seeking_actions_to_from(account_name,from_date,to_date)
+        seeking_result = seeking_actions_to_from(account_name,from_date,to_date, ELASTIC_INDEX)
     elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
-        seeking_result = seeking_actions_account_name(account_name)
+        seeking_result = seeking_actions_account_name(account_name, ELASTIC_INDEX)
     else:
-         seeking_result = seeking_actions(account_name,pos,offset)
+         seeking_result = seeking_actions(account_name,pos,offset, ELASTIC_INDEX)
     if seeking_result is None:
         return abort(404)
 
@@ -46,8 +54,8 @@ def get_actions():
     return response
 
 
-def seeking_actions_account_name(account_name):
-    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'], size = 10000,
+def seeking_actions_account_name(account_name, es_index):
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
          body={"query":
                     {"multi_match":
                       {
@@ -72,8 +80,8 @@ def seeking_actions_account_name(account_name):
 
     return {"actions": result}
 
-def seeking_actions_last_days(account_name, last_days):
-    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'], size = 10000,
+def seeking_actions_last_days(account_name, last_days,es_index):
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
                          body={
                              "query": {
                                  "bool": {
@@ -103,7 +111,7 @@ def seeking_actions_last_days(account_name, last_days):
 
     return {"actions": result}
 
-def seeking_actions(account_name, pos, offset):
+def seeking_actions(account_name, pos, offset, es_index):
     if pos == -1 and offset == -1:
         pos = 0
         offset = 1
@@ -123,7 +131,7 @@ def seeking_actions(account_name, pos, offset):
         sortColumn = "block_num"
     else: return None
 
-    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'],
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'],
                          size=offset, from_=pos,
                          body={
                              "query":
@@ -148,7 +156,7 @@ def seeking_actions(account_name, pos, offset):
 
     return {"actions":result}
 
-def seeking_actions_to_from(account_name, from_date, to_date):
+def seeking_actions_to_from(account_name, from_date, to_date, es_index):
 
     if isinstance(from_date, int):
         es_from_date = datetime.datetime.utcfromtimestamp(from_date).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -159,7 +167,7 @@ def seeking_actions_to_from(account_name, from_date, to_date):
     else:
         es_to_date = to_date
 
-    resp = client.search(index='action_traces*', filter_path=['hits.hits._*'], size = 10000,
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
                          body={
                              "query": {
                                  "bool": {

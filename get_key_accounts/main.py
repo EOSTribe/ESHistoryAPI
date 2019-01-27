@@ -14,12 +14,20 @@ client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=3
 @app.route('/v1/history/get_key_accounts', methods=['POST'])
 @app.route('/v2/history/get_key_accounts', methods=['POST'])
 def get_key_accounts():
+    if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
+        ELASTIC_INDEX = "worbli_accounts*"
+    elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
+        ELASTIC_INDEX = "bos_accounts*"
+    elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
+        ELASTIC_INDEX = "telos_accounts*"
+    else:
+        ELASTIC_INDEX = "accounts*"
 
     public_key = request.get_json(force=True).get('public_key')
 
 
     if isinstance(public_key, str) and public_key != None:
-        seeking_result = seeking_actions(public_key)
+        seeking_result = seeking_actions(public_key, ELASTIC_INDEX)
     else:
         return abort(404)
 
@@ -30,8 +38,8 @@ def get_key_accounts():
     response = Response(json_string, content_type="application/json; charset=utf-8")
     return response
 
-def seeking_actions(public_key):
-    resp = client.search(index='accounts', filter_path=['hits.hits._*'],
+def seeking_actions(public_key, es_index):
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'],
                          body={
                              "query":
                                  {"match":

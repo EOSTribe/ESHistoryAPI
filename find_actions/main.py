@@ -8,21 +8,25 @@ app = Flask(__name__)
 
 ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
-ELASTIC_INDEX_PREFIX=os.environ['ELASTIC_INDEX_PREFIX']
-
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
 @app.route('/v1/history/find_actions', methods=['POST'])
 @app.route('/v2/history/find_actions', methods=['POST'])
 def get_key_accounts():
-    print(request.headers['Host'])
-    print(request.headers['X-Forwarded-Host'])
+    if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
+        ELASTIC_INDEX = "worbli_action_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
+        ELASTIC_INDEX = "bos_action_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
+        ELASTIC_INDEX = "telos_action_traces*"
+    else:
+        ELASTIC_INDEX = "action_traces*"
 
-    public_key = request.get_json(force=True).get('public_key')
+    data = request.get_json(force=True).get('data')
 
 
-    if isinstance(public_key, str) and public_key != None:
-        seeking_result = seeking_actions(public_key)
+    if isinstance(data, str) and data != None:
+        seeking_result = seeking_actions(data, ELASTIC_INDEX)
     else:
         return abort(404)
 
@@ -33,24 +37,26 @@ def get_key_accounts():
     response = Response(json_string, content_type="application/json; charset=utf-8")
     return response
 
-def seeking_actions(public_key):
-    resp = client.search(index='accounts', filter_path=['hits.hits._*'],
-                         body={
-                             "query":
-                                 {"match":
-                                      {"pub_keys.key": public_key
-                                       }
-                                  }
-                         })
+def seeking_actions(data, es_index):
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'],
+                         body={"query":
+                                   {"bool": {"filter": [
+                                       {"bool":
+                                           {"should": [
+                                               {"match_phrase":
+                                                    {"act.data": data}}],
+                                       "minimum_should_match": 1}}]}},
+                             "timeout": '10s'}
+                         )
     if len(resp) == 0:
         return None
 
     result = []
 
     for field in resp['hits']['hits']:
-        result.append(field['_source']['name'])
+        result.append(field['_source'])
 
-    return {"account_names":result}
+    return {"actions":result}
 
 
 if __name__ == '__main__':
