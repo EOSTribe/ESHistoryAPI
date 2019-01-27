@@ -14,13 +14,21 @@ client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=3
 @app.route('/v1/history/get_transaction', methods=['POST'])
 @app.route('/v2/history/get_transaction', methods=['POST'])
 def get_transaction():
+    if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
+        elasticIndex = "worbli_transaction_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
+        elasticIndex = "bos_transaction_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
+        elasticIndex = "telos_transaction_traces*"
+    else:
+        elasticIndex = "transaction_traces*"
 
     transaction_id = request.get_json(force=True).get('id')
 
     if len(transaction_id) != 64:
         return abort(404)
 
-    seeking_result = seeking_transaction(transaction_id)
+    seeking_result = seeking_transaction(transaction_id, elasticIndex)
 
     if seeking_result is None:
         return abort(404)
@@ -29,8 +37,8 @@ def get_transaction():
     response = Response(json_string, content_type="application/json; charset=utf-8")
     return response
 
-def seeking_transaction(transaction_id):
-    resp = client.search(index='transaction_traces*', filter_path=['hits.hits._*'],
+def seeking_transaction(transaction_id, es_index):
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'],
      body={
         "query":
             {"match":

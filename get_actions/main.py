@@ -16,13 +16,13 @@ client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=3
 @app.route('/v2/history/get_actions', methods=['POST'])
 def get_actions():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
-        ELASTIC_INDEX = "worbli_action_traces*"
+        elasticIndex = "worbli_action_traces*"
     elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
-        ELASTIC_INDEX = "bos_action_traces*"
+        elasticIndex = "bos_action_traces*"
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
-        ELASTIC_INDEX = "telos_action_traces*"
+        elasticIndex = "telos_action_traces*"
     else:
-        ELASTIC_INDEX = "action_traces*"
+        elasticIndex = "action_traces*"
 
     pos = request.get_json(force=True).get('pos')
 
@@ -39,13 +39,13 @@ def get_actions():
     if account_name == None:
         return 404
     elif last_days != None:
-        seeking_result = seeking_actions_last_days(account_name, str(last_days), ELASTIC_INDEX)
+        seeking_result = seeking_actions_last_days(account_name, str(last_days), elasticIndex)
     elif from_date != None and to_date != None:
-        seeking_result = seeking_actions_to_from(account_name,from_date,to_date, ELASTIC_INDEX)
+        seeking_result = seeking_actions_to_from(account_name,from_date,to_date, elasticIndex)
     elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
-        seeking_result = seeking_actions_account_name(account_name, ELASTIC_INDEX)
+        seeking_result = seeking_actions_account_name(account_name, elasticIndex)
     else:
-         seeking_result = seeking_actions(account_name,pos,offset, ELASTIC_INDEX)
+         seeking_result = seeking_actions(account_name,pos,offset, elasticIndex)
     if seeking_result is None:
         return abort(404)
 
