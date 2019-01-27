@@ -38,7 +38,7 @@ def get_key_accounts():
     return response
 
 def seeking_actions(data, es_index):
-    resp = client.search(index=es_index, filter_path=['hits.hits._*'],
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 1000,
                          body={"query":
                                    {"bool": {"filter": [
                                        {"bool":
