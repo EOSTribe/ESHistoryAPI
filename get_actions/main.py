@@ -11,7 +11,6 @@ ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-
 @app.route('/v1/history/get_actions', methods=['POST'])
 @app.route('/v2/history/get_actions', methods=['POST'])
 def get_actions():
@@ -177,7 +176,7 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
                                                "fields": ["act.authorization.actor"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": es_from_date, "lt": es_to_date}}}
+                                         {"range": {"block_time": {"gte": es_from_date, "lte": es_to_date}}}
                                      ]
                                  }},
                              "sort": [
