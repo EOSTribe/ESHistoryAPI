@@ -162,7 +162,7 @@ def seeking_actions_last(data,last,es_index):
                              "sort": [
                                  {"block_time": {"order": "asc"}}
                              ],
-                             "timeout": '20s'
+                             "timeout": '60s'
                          }
                          )
     if len(resp) == 0:
