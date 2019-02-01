@@ -1,4 +1,6 @@
 import datetime
+import re
+
 from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import math
@@ -27,18 +29,22 @@ def get_actions():
 
     offset = request.get_json(force=True).get('offset')
 
+    last = request.get_json(force=True).get('last')
+
     account_name =request.get_json(force=True).get('account_name')
 
     last_days = request.get_json(force=True).get('last_days')
 
-    from_date =  request.get_json(force=True).get('from_date')
+    from_date = request.get_json(force=True).get('from_date')
 
-    to_date =  request.get_json(force=True).get('to_date')
+    to_date = request.get_json(force=True).get('to_date')
 
     if account_name == None:
         return 404
     elif last_days != None:
         seeking_result = seeking_actions_last_days(account_name, str(last_days), elasticIndex)
+    elif last != None:
+        seeking_result = seeking_actions_last(account_name, str(last), elasticIndex)
     elif from_date != None and to_date != None:
         seeking_result = seeking_actions_to_from(account_name,from_date,to_date, elasticIndex)
     elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
@@ -195,6 +201,43 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
         result.append(field['_source'])
 
     return {"actions": result}
+
+def seeking_actions_last(account_name,last,es_index):
+
+    timeMetric = re.search(r"([0-9]+)([a-zA-Z])", last).groups()
+
+
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
+                         body={
+                             "query": {
+                                 "bool": {
+                                     "must": [
+                                         {"multi_match":
+                                              {"query": account_name,
+                                               "fields": ["act.authorization.actor"]
+                                               }}],
+                                     "filter": [
+                                         {"range": {"block_time": {"gte": "now-"+timeMetric[0]+timeMetric[1]}}}
+                                     ]
+                                 }},
+                             "sort": [
+                                 {"block_time": {"order": "asc"}}
+                             ],
+                             "timeout": '20s'
+                         }
+                         )
+
+    if len(resp) == 0:
+        return None
+
+    result = []
+
+    for field in resp['hits']['hits']:
+        result.append(field['_source'])
+
+    return {"actions": result}
+
+
 
 
 

@@ -1,3 +1,5 @@
+import re
+
 from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import datetime
@@ -25,6 +27,8 @@ def find_actions():
 
     last_days = request.get_json(force=True).get('last_days')
 
+    last = request.get_json(force=True).get('last')
+
     from_date = request.get_json(force=True).get('from_date')
 
     to_date =  request.get_json(force=True).get('to_date')
@@ -39,6 +43,8 @@ def find_actions():
          seeking_result = seeking_actions_to_from(data,from_date,to_date, elasticIndex)
     elif last_days == None and from_date == None and to_date== None:
         seeking_result = seeking_actions(data, elasticIndex)
+    elif last != None:
+        seeking_result = seeking_actions_last(data, str(last), elasticIndex)
     else:
         return abort(404)
     if seeking_result is None:
@@ -127,6 +133,38 @@ def seeking_actions_to_from(data, from_date, to_date, es_index):
                          }
                          )
 
+    if len(resp) == 0:
+        return None
+
+    result = []
+
+    for field in resp['hits']['hits']:
+        result.append(field['_source'])
+
+    return {"actions": result}
+
+def seeking_actions_last(data,last,es_index):
+
+    timeMetric = re.search(r"([0-9]+)([a-zA-Z])", last).groups()
+    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
+                         body={
+                             "query": {
+                                 "bool": {
+                                     "must": [
+                                         {"multi_match":
+                                              {"query": data,
+                                               "fields": ["act.data"]
+                                               }}],
+                                     "filter": [
+                                         {"range": {"block_time": {"gte": "now-"+timeMetric[0]+timeMetric[1]}}}
+                                     ]
+                                 }},
+                             "sort": [
+                                 {"block_time": {"order": "asc"}}
+                             ],
+                             "timeout": '60s'
+                         }
+                         )
     if len(resp) == 0:
         return None
 
