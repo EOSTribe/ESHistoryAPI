@@ -86,7 +86,7 @@ def seeking_actions_last_days(data, last_days,es_index):
                                                "fields": ["act.data"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-" + last_days + "d/d", "lt": "now/d"}}}
+                                         {"range": {"block_time": {"gte": "now-" + last_days + "d/d", "lte": "now/d"}}}
                                      ]
                                  }},
                                                           "timeout": '20s'
@@ -156,7 +156,7 @@ def seeking_actions_last(data,last,es_index):
                                                "fields": ["act.data"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-"+timeMetric[0]+timeMetric[1]}}}
+                                         {"range": {"block_time": {"gte": "now-"+timeMetric[0]+timeMetric[1]}}, "lte":"now"}
                                      ]
                                  }},
                              "sort": [
