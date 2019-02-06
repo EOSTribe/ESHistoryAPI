@@ -223,7 +223,7 @@ def seeking_actions_last(account_name,last,es_index):
                              "sort": [
                                  {"block_time": {"order": "asc"}}
                              ],
-                             "timeout": '60s'
+                             "timeout": '90s'
                          }
                          )
 
