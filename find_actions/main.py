@@ -173,7 +173,7 @@ def seeking_actions_last(data,last,es_index):
     result = []
 
     for field in resp['hits']['hits']:
-        result.append(field['_source']['block_time'])
+        result.append(field['_source'])
 
     return {"actions": result}
 
