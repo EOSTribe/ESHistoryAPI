@@ -41,10 +41,10 @@ def find_actions():
         seeking_result = seeking_actions_last_days(data, str(last_days), elasticIndex)
     elif from_date != None and to_date != None:
          seeking_result = seeking_actions_to_from(data,from_date,to_date, elasticIndex)
-    elif last_days == None and from_date == None and to_date== None:
-        seeking_result = seeking_actions(data, elasticIndex)
     elif last != None:
         seeking_result = seeking_actions_last(data, str(last), elasticIndex)
+    elif last_days == None and from_date == None and to_date== None and last == None:
+        seeking_result = seeking_actions(data, elasticIndex)
     else:
         return abort(404)
     if seeking_result is None:
@@ -86,7 +86,7 @@ def seeking_actions_last_days(data, last_days,es_index):
                                                "fields": ["act.data"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-" + last_days + "d/d", "lt": "now/d"}}}
+                                         {"range": {"block_time": {"gte": "now-" + last_days + "d/d", "lte": "now/d"}}}
                                      ]
                                  }},
                                                           "timeout": '20s'
@@ -145,7 +145,9 @@ def seeking_actions_to_from(data, from_date, to_date, es_index):
 
 def seeking_actions_last(data,last,es_index):
 
-    timeMetric = re.search(r"([0-9]+)([a-zA-Z])", last).groups()
+    if re.fullmatch(r"([0-9]+)([y,M,w,d,h,H,m,s])", last) != True:
+        return None
+
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
                          body={
                              "query": {
@@ -156,13 +158,13 @@ def seeking_actions_last(data,last,es_index):
                                                "fields": ["act.data"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-"+timeMetric[0]+timeMetric[1]}}}
+                                         {"range": {"block_time": {"gte": "now-"+last, "lte":"now"}}}
                                      ]
                                  }},
                              "sort": [
                                  {"block_time": {"order": "asc"}}
                              ],
-                             "timeout": '60s'
+                             "timeout": '90s'
                          }
                          )
     if len(resp) == 0:
@@ -171,7 +173,7 @@ def seeking_actions_last(data,last,es_index):
     result = []
 
     for field in resp['hits']['hits']:
-        result.append(field['_source'])
+        result.append(field['_source']['block_time'])
 
     return {"actions": result}
 

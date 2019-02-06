@@ -96,7 +96,7 @@ def seeking_actions_last_days(account_name, last_days,es_index):
                                                "fields": ["act.authorization.actor"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-"+last_days+"d/d", "lt": "now/d"}}}
+                                         {"range": {"block_time": {"gte": "now-"+last_days+"d/d", "lte": "now/d"}}}
                                      ]
                                  }},
                              "sort": [
@@ -204,8 +204,8 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
 
 def seeking_actions_last(account_name,last,es_index):
 
-    timeMetric = re.search(r"([0-9]+)([a-zA-Z])", last).groups()
-
+    if re.fullmatch(r"([0-9]+)([y,M,w,d,h,H,m,s])", last) != True:
+        return None
 
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
                          body={
@@ -217,13 +217,13 @@ def seeking_actions_last(account_name,last,es_index):
                                                "fields": ["act.authorization.actor"]
                                                }}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-"+timeMetric[0]+timeMetric[1]}}}
+                                         {"range": {"block_time": {"gte": "now-"+last, "lte":"now"}}}
                                      ]
                                  }},
                              "sort": [
                                  {"block_time": {"order": "asc"}}
                              ],
-                             "timeout": '20s'
+                             "timeout": '60s'
                          }
                          )
 
