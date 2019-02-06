@@ -145,7 +145,7 @@ def seeking_actions_to_from(data, from_date, to_date, es_index):
 
 def seeking_actions_last(data,last,es_index):
 
-    if re.fullmatch(r"([0-9]+)([y,M,w,d,h,H,m,s])", last) != True:
+    if re.fullmatch(r"([0-9]+)([y,M,w,d,h,H,m,s])", last) == None:
         return None
 
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
