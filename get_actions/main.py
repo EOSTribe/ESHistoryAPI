@@ -81,6 +81,8 @@ def seeking_actions_account_name(account_name, es_index):
     result = []
 
     for field in resp['hits']['hits']:
+        field['_source']['act']['data'] = json.loads(
+            field['_source']['act']['data'])
         result.append(field['_source'])
 
     return {"actions": result}
@@ -112,6 +114,9 @@ def seeking_actions_last_days(account_name, last_days,es_index):
     result = []
 
     for field in resp['hits']['hits']:
+
+        field['_source']['act']['data'] = json.loads(
+            field['_source']['act']['data'])
         result.append(field['_source'])
 
     return {"actions": result}
@@ -157,6 +162,8 @@ def seeking_actions(account_name, pos, offset, es_index):
     result = []
 
     for field in resp['hits']['hits']:
+        field['_source']['act']['data'] = json.loads(
+            field['_source']['act']['data'])
         result.append(field['_source'])
 
     return {"actions":result}
@@ -198,6 +205,8 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
     result = []
 
     for field in resp['hits']['hits']:
+        field['_source']['act']['data'] = json.loads(
+            field['_source']['act']['data'])
         result.append(field['_source'])
 
     return {"actions": result}
@@ -233,6 +242,8 @@ def seeking_actions_last(account_name,last,es_index):
     result = []
 
     for field in resp['hits']['hits']:
+        field['_source']['act']['data'] = json.loads(
+            field['_source']['act']['data'])
         result.append(field['_source'])
 
     return {"actions": result}
