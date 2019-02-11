@@ -13,6 +13,9 @@ ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
+results = []
+
+
 @app.route('/v1/history/find_actions', methods=['POST'])
 @app.route('/v2/history/find_actions', methods=['POST'])
 def find_actions():
@@ -148,7 +151,9 @@ def seeking_actions_last(data,last,es_index):
     if re.fullmatch(r"([0-9]+)([y,M,w,d,h,H,m,s])", last) == None:
         return None
 
-    resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
+    data = client.search(index=es_index,
+                         size = 10000,
+                         scroll='2m',
                          body={
                              "query": {
                                  "bool": {
@@ -164,18 +169,41 @@ def seeking_actions_last(data,last,es_index):
                              "sort": [
                                  {"block_time": {"order": "asc"}}
                              ],
-                             "timeout": '90s'
-                         }
+                             "timeout": "90s"}
                          )
-    if len(resp) == 0:
+    sid = data['_scroll_id']
+    scroll_size = data['hits']['total']
+
+    if scroll_size == 0:
         return None
 
-    result = []
+    process_hits(data['hits']['hits'])
 
-    for field in resp['hits']['hits']:
-        result.append(field['_source'])
+    # Start scrolling
+    while (scroll_size > 0):
+        print
+        "Scrolling..."
+        data = client.scroll(scroll_id=sid, scroll='2m')
 
-    return {"actions": result}
+        process_hits(data['hits']['hits'])
+
+        # Update the scroll ID
+        sid = data['_scroll_id']
+        # Get the number of results that we returned in the last scroll
+        scroll_size = len(data['hits']['hits'])
+        print
+        "scroll size: " + str(scroll_size)
+        # Do something with the obtained page
+
+    # for field in resp['hits']['hits']:
+    #     result.append(field['_source'])
+
+    return {"actions": results}
+
+def process_hits(hits):
+    for item in hits:
+        results.append(item['_source'])
+
 
 
 if __name__ == '__main__':
