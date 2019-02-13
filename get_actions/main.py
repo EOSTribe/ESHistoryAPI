@@ -56,6 +56,8 @@ def get_actions():
 
     json_string = json.dumps(seeking_result,ensure_ascii = False)
     response = Response(json_string, content_type="application/json; charset=utf-8")
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
     return response
 
 
