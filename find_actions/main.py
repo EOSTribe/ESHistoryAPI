@@ -1,5 +1,5 @@
 import re
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import datetime
@@ -14,30 +14,27 @@ ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-@app.route('/v1/history/find_actions', methods=['POST','OPTIONS'])
-@app.route('/v2/history/find_actions', methods=['POST','OPTIONS'])
+@app.route('/v1/history/find_actions',methods=['POST','OPTIONS','GET'])
+@app.route('/v2/history/find_actions',methods=['POST','OPTIONS','GET'])
+@cross_origin()
 def find_actions():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
-        elasticIndex = "worbli_action_traces*"
+       elasticIndex = "worbli_action_traces*"
     elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
-        elasticIndex = "bos_action_traces*"
+      elasticIndex = "bos_action_traces*"
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
-        elasticIndex = "telos_action_traces*"
+      elasticIndex = "telos_action_traces*"
     else:
-        elasticIndex = "action_traces*"
+      elasticIndex = "action_traces*"
 
     last_days = request.get_json(force=True).get('last_days')
-
     last = request.get_json(force=True).get('last')
-
     from_date = request.get_json(force=True).get('from_date')
-
     to_date =  request.get_json(force=True).get('to_date')
-
     data = request.get_json(force=True).get('data')
 
     if data == None:
-        return 404
+        return ('', 204)
     elif last_days != None:
         seeking_result = seeking_actions_last_days(data, str(last_days), elasticIndex)
     elif from_date != None and to_date != None:
@@ -47,14 +44,12 @@ def find_actions():
     elif last_days == None and from_date == None and to_date== None and last == None:
         seeking_result = seeking_actions(data, elasticIndex)
     else:
-        return abort(404)
+        return ('', 204)
     if seeking_result is None:
         return abort(404)
 
     json_string = json.dumps(seeking_result,ensure_ascii = False)
     response = Response(json_string, content_type="application/json; charset=utf-8")
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
     return response
 
 def seeking_actions(data, es_index):

@@ -3,7 +3,7 @@ from elasticsearch import Elasticsearch
 import math
 import json
 import os
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 CORS(app)
@@ -13,8 +13,9 @@ ELASTIC_PORT = os.environ['ELASTIC_PORT']
 
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-@app.route('/v1/history/get_key_accounts', methods=['POST','OPTIONS'])
-@app.route('/v2/history/get_key_accounts', methods=['POST','OPTIONS'])
+@app.route('/v1/history/get_key_accounts', methods=['POST','OPTIONS','GET'])
+@app.route('/v2/history/get_key_accounts', methods=['POST','OPTIONS','GET'])
+@cross_origin()
 def get_key_accounts():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
         elasticIndex = "worbli_accounts*"
@@ -38,8 +39,6 @@ def get_key_accounts():
 
     json_string = json.dumps(seeking_result,ensure_ascii = False)
     response = Response(json_string, content_type="application/json; charset=utf-8")
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
     return response
 
 def seeking_actions(public_key, es_index):

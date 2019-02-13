@@ -2,7 +2,7 @@ from flask import Flask, Response, request, abort
 from elasticsearch import Elasticsearch
 import os
 import json
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 
 app = Flask(__name__)
@@ -13,8 +13,9 @@ ELASTIC_PORT = os.environ['ELASTIC_PORT']
 
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-@app.route('/v1/history/get_transaction', methods=['POST','OPTIONS'])
-@app.route('/v2/history/get_transaction', methods=['POST','OPTIONS'])
+@app.route('/v1/history/get_transaction', methods=['POST','OPTIONS','GET'])
+@app.route('/v2/history/get_transaction', methods=['POST','OPTIONS','GET'])
+@cross_origin()
 def get_transaction():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
         elasticIndex = "worbli_transaction_traces*"

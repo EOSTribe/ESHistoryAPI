@@ -1,7 +1,7 @@
 import datetime
 import re
-from flask_cors import CORS
 
+from flask_cors import CORS, cross_origin
 from flask import Flask, jsonify, request, abort, Response
 from elasticsearch import Elasticsearch
 import math
@@ -15,8 +15,9 @@ ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-@app.route('/v1/history/get_actions', methods=['POST','OPTIONS'])
-@app.route('/v2/history/get_actions', methods=['POST','OPTIONS'])
+@app.route('/v1/history/get_actions', methods=['POST','OPTIONS','GET'])
+@app.route('/v2/history/get_actions', methods=['POST','OPTIONS','GET'])
+@cross_origin()
 def get_actions():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
         elasticIndex = "worbli_action_traces*"
@@ -58,8 +59,6 @@ def get_actions():
 
     json_string = json.dumps(seeking_result,ensure_ascii = False)
     response = Response(json_string, content_type="application/json; charset=utf-8")
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
     return response
 
 
