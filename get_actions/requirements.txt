@@ -2,3 +2,4 @@ elasticsearch
 gunicorn
 requests
 flask
+flask-cors
