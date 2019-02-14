@@ -57,11 +57,11 @@ def seeking_actions(data, es_index):
                          body={"query":
                                    {"bool": {"filter": [
                                        {"bool":
-                                           {"should": [
+                                           {"must": [
                                                {"match_phrase":
-                                                    {"act.data": data}}],
-                                       "minimum_should_match": 1}}]}},
-                             "timeout": '10s'}
+                                                    {"act.data": data}}]
+                                       }}]}},
+                             "timeout": '20s'}
                          )
     if len(resp) == 0:
         return None
@@ -80,16 +80,14 @@ def seeking_actions_last_days(data, last_days,es_index):
                          body={
                              "query": {
                                  "bool": {
-                                     "should": [
-                                         {"multi_match":
-                                              {"query": data,
-                                               "fields": ["act.data"]
-                                               }}],
+                                     "must": [{
+                                         "match_phrase":{
+                                             "act.data": data}}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": "now-" + last_days + "d/d", "lte": "now/d"}}}
                                      ]
                                  }},
-                                                          "timeout": '20s'
+                             "timeout": '20s'
                          }
                          )
 
@@ -120,10 +118,8 @@ def seeking_actions_to_from(data, from_date, to_date, es_index):
                              "query": {
                                  "bool": {
                                      "must": [
-                                         {"multi_match":
-                                              {"query": data,
-                                               "fields": ["act.data"]
-                                               }}],
+                                         {"match_phrase":
+                                              {"act.data": data}}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": es_from_date, "lte": es_to_date}}}
                                      ]
@@ -156,19 +152,17 @@ def seeking_actions_last(data,last,es_index):
                          body={
                              "query": {
                                  "bool": {
-                                     "must": [
-                                         {"multi_match":
-                                              {"query": data,
-                                               "fields": ["act.data"]
-                                               }}],
+                                     "must":[{
+                                         "match_phrase":{
+                                            "act.data":{
+                                                "query": data}}}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": "now-"+last, "lte":"now"}}}
                                      ]
                                  }},
                              "sort": [
-                                 {"block_time": {"order": "asc"}}
-                             ],
-                             "timeout": '90s'
+                                 {"block_time": {"order": "asc"}}],
+                             "timeout": "90s"
                          }
                          )
     if len(resp) == 0:
@@ -188,3 +182,4 @@ def seeking_actions_last(data,last,es_index):
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5500, debug=True)
     app.config['JSON_AS_ASCII'] = False
+
