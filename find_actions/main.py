@@ -178,7 +178,6 @@ def seeking_actions_last(data,last,es_index):
 
     return {"actions": result}
 
-
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5500, debug=True)
     app.config['JSON_AS_ASCII'] = False
