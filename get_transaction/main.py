@@ -55,11 +55,8 @@ def seeking_transaction(transaction_id, es_index):
     if len(resp) == 0:
         return None
 
-    result = []
-
     for field in resp['hits']['hits']:
-        result.append(field['_source'])
-    return result
+        return field['_source']
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5500, debug=True)
