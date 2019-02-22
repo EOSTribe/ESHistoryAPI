@@ -56,6 +56,7 @@ def seeking_transaction(transaction_id, es_index):
         return None
 
     for field in resp['hits']['hits']:
+        field['_source']['trx'] = field['_source']['receipt']
         return field['_source']
 
 if __name__ == '__main__':
