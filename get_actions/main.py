@@ -303,7 +303,6 @@ def seeking_actions_last_days_contract_filtered(account_name, last_days,contract
     result = []
 
     for field in resp['hits']['hits']:
-
         field['_source']['act']['data'] = json.loads(
             field['_source']['act']['data'])
         result.append(field['_source'])
