@@ -70,16 +70,17 @@ def get_actions():
 
 def seeking_actions_account_name(account_name, es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
-         body={"query":
-                    {"multi_match":
-                      {
-                      "query": account_name,
-                      "fields": ["act.authorization.actor"]
-                      }
-                    },
-                    "sort": [
-                      {"block_time": {"order": "desc"}}
-                      ],
+         body={"query":{"bool":{
+	          "must":[],
+	                "filter":[
+                        {"bool":
+		                  {"should":[
+                              {"bool":{"should":[{"match_phrase":
+		                        {"act.authorization.actor":account_name}}],"minimum_should_match":1}},
+		                      {"bool":{"should":[{"match_phrase":
+		                        {"receipt.receiver":account_name}}],"minimum_should_match":1}}],
+                           "minimum_should_match":1}}]}},
+                    "sort": [{"block_time": {"order": "desc"}}],
                     "timeout": "10s"
                     }
                 )
@@ -98,17 +99,18 @@ def seeking_actions_account_name(account_name, es_index):
 
 def seeking_actions_last_days(account_name, last_days,es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
-                         body={
-                             "query":{"bool":{"must":[{"match_phrase":
-                                {"act.authorization.actor":{"query": account_name}}},
-                                {"range":{"block_time":{"gte":"now-"+str(last_days)+"d","lte":"now"}}}],
-                                "filter":[]}},
-                             "sort": [
-                                 {"block_time": {"order": "asc"}}
-                             ],
-                             "timeout": "20s"
-                         }
-                         )
+        body={
+          "query":{"bool":{
+	          "must":[
+                  {"range":{"block_time":{"gte":"now-"+str(last_days)+"d","lte":"now"}}}],
+	          "filter":[{"bool":
+		             {"should":[
+                         {"bool":{"should":[{"match_phrase":
+		                    {"act.authorization.actor":account_name}}],"minimum_should_match":1}},
+		                 {"bool":{"should":[{"match_phrase":
+		                   {"receipt.receiver":account_name}}],"minimum_should_match":1}}],"minimum_should_match":1}}]}},
+        "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
+            })
 
     if len(resp) == 0:
         return None
@@ -146,18 +148,21 @@ def seeking_actions(account_name, pos, offset, es_index):
 
     resp = client.search(index=es_index, filter_path=['hits.hits._*'],
                          size=offset, from_=pos,
-                         body={
-                             "query":
-                                 {"multi_match":
-                                    {
-                                       "query": account_name,
-                                        "fields": ["act.authorization.actor"]
-                                        }
-                                 },
+            body={"query":{
+                    "bool":{
+                        "must": [],
+                          "filter":
+                              [{"bool":
+                                  {"should":[{"bool":
+                                               {"should": [{"match_phrase":
+                                                    {"act.authorization.actor": account_name}}],"minimum_should_match": 1}},
+                                            {"bool":
+                                               {"should": [{"match_phrase":
+                                                    {"receipt.receiver": account_name}}],"minimum_should_match": 1}}],"minimum_should_match": 1}}]}},
                              "sort": [
                                  {sortColumn: {"order": sortOrder}}
                              ],
-                             "timeout": '10s'
+                             "timeout": "10s"
                          })
     if len(resp) == 0:
         return None
@@ -183,24 +188,19 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
         es_to_date = to_date
 
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
-                         body={
-                             "query": {
-                                 "bool": {
-                                     "must": [
-                                         {"multi_match":
-                                              {"query": account_name,
-                                               "fields": ["act.authorization.actor", "receipt.receiver"]
-                                               }}],
-                                     "filter": [
-                                         {"range": {"block_time": {"gte": es_from_date, "lte": es_to_date}}}
-                                     ]
-                                 }},
-                             "sort": [
-                                 {"block_time": {"order": "desc"}}
-                             ],
-                             "timeout": "20s"
-                         }
-                         )
+        body={
+            "query":{"bool":{
+	          "must":[
+		        {"range":{
+		           "block_time":{"gte":es_from_date,"lte":es_to_date}}}],
+	                "filter":[{"bool":
+		             {"should":[{"bool":
+		              {"should":[{"match_phrase":
+		               {"act.authorization.actor":account_name}}],"minimum_should_match":1}},
+		              {"bool":{"should":[{"match_phrase":
+		               {"receipt.receiver":account_name}}],"minimum_should_match":1}}],"minimum_should_match":1}}]}},
+             "sort": [{"block_time": {"order": "desc"}}],"timeout": "20s"
+            })
 
     if len(resp) == 0:
         return None
@@ -220,24 +220,19 @@ def seeking_actions_last(account_name,last,es_index):
         return None
 
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
-                         body={
-                             "query": {
-                                 "bool": {
-                                     "must": [
-                                         {"multi_match":
-                                              {"query": account_name,
-                                               "fields": ["act.authorization.actor", "receipt.receiver"]
-                                               }}],
-                                     "filter": [
-                                         {"range": {"block_time": {"gte": "now-"+last, "lte":"now"}}}
-                                     ]
-                                 }},
+        body={
+          "query":{"bool":{
+	          "must":[
+		        {"range":{
+		           "block_time":{"gte":"now-"+last,"lte":"now"}}}],
+	                "filter":[{"bool":
+		             {"should":[{"bool":
+		              {"should":[{"match_phrase":
+		               {"act.authorization.actor":account_name}}],"minimum_should_match":1}},
+		              {"bool":{"should":[{"match_phrase":
+		               {"receipt.receiver":account_name}}],"minimum_should_match":1}}],"minimum_should_match":1}}]}},
                              "sort": [
-                                 {"block_time": {"order": "asc"}}
-                             ],
-                             "timeout": '90s'
-                         }
-                         )
+                                 {"block_time": {"order": "asc"}}],"timeout": "90s"})
 
     if len(resp) == 0:
         return None
@@ -253,20 +248,18 @@ def seeking_actions_last(account_name,last,es_index):
 
 def seeking_actions_last_days_action_filtered(account_name, last_days,action_name, es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
-                         body={
-                             "query":{"bool":{"must":[{"match_phrase":
-                                {"act.authorization.actor":{"query": account_name}}},
-                                {"range":{"block_time":{"gte":"now-"+str(last_days)+"d","lte":"now"}}}],
-                                "filter":[
-                                    {"bool": {"should": [{"match": {"act.name": action_name}}],
-                                              "minimum_should_match": 1}}
-                                ]}},
-                             "sort": [
-                                 {"block_time": {"order": "asc"}}
-                             ],
-                             "timeout": "20s"
-                         }
-                         )
+        body={
+           "query": {"bool": {"must": [
+                   {"range": {"block_time": {"gte": "now-"+str(last_days)+"d", "lte": "now"}}},
+                   {"match_phrase": {"act.name": {"query": action_name}}}],
+                "filter": [{"bool": {"should": [
+                              {"bool": {"should": [
+                                  {"match_phrase": {"act.authorization.actor": account_name}}],"minimum_should_match": 1}},
+                              {"bool": {"should": [{
+                                 "match_phrase": {"receipt.receiver": account_name}}],"minimum_should_match": 1}}
+                                                ],"minimum_should_match": 1}}]}},
+            "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
+        })
 
     if len(resp) == 0:
         return None
@@ -283,18 +276,16 @@ def seeking_actions_last_days_action_filtered(account_name, last_days,action_nam
 
 def seeking_actions_last_days_contract_filtered(account_name, last_days,contract, es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
-                         body={
-                             "query":{"bool":{"must":[{"match_phrase":
-                                {"act.authorization.actor":{"query": account_name}}},
-                                {"range":{"block_time":{"gte":"now-"+str(last_days)+"d","lte":"now"}}}],
-                                "filter":[
-                                    {"bool": {"should": [{"match": {"act.account": contract}}],
-                                              "minimum_should_match": 1}}
-                                ]}},
-                             "sort": [
-                                 {"block_time": {"order": "asc"}}
-                             ],
-                             "timeout": "20s"
+        body={"query": {"bool": {"must": [
+                   {"range": {"block_time": {"gte": "now-"+str(last_days)+"d", "lte": "now"}}},
+                   {"match_phrase": {"act.account": {"query": contract}}}],
+                "filter": [{"bool": {"should": [
+                              {"bool": {"should": [
+                                  {"match_phrase": {"act.authorization.actor": account_name}}],"minimum_should_match": 1}},
+                              {"bool": {"should": [{
+                                 "match_phrase": {"receipt.receiver": account_name}}],"minimum_should_match": 1}}
+                                                ],"minimum_should_match": 1}}]}},
+            "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
                          }
                          )
 
