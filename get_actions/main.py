@@ -80,7 +80,7 @@ def seeking_actions_account_name(account_name, es_index):
                     "sort": [
                       {"block_time": {"order": "desc"}}
                       ],
-                    "timeout": '10s'
+                    "timeout": "10s"
                     }
                 )
 
@@ -138,6 +138,7 @@ def seeking_actions(account_name, pos, offset, es_index):
         sortOrder = 'asc'
         pos = 0
         offset = 1
+        sortColumn = "block_num"
     elif 0 <= pos and 0 <= offset:
         sortOrder = 'asc'
         sortColumn = "block_num"
@@ -188,7 +189,7 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
                                      "must": [
                                          {"multi_match":
                                               {"query": account_name,
-                                               "fields": ["act.authorization.actor"]
+                                               "fields": ["act.authorization.actor", "receipt.receiver"]
                                                }}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": es_from_date, "lte": es_to_date}}}
@@ -225,7 +226,7 @@ def seeking_actions_last(account_name,last,es_index):
                                      "must": [
                                          {"multi_match":
                                               {"query": account_name,
-                                               "fields": ["act.authorization.actor"]
+                                               "fields": ["act.authorization.actor", "receipt.receiver"]
                                                }}],
                                      "filter": [
                                          {"range": {"block_time": {"gte": "now-"+last, "lte":"now"}}}
