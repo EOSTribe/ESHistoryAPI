@@ -88,14 +88,7 @@ def seeking_actions_account_name(account_name, es_index):
     if len(resp) == 0:
         return None
 
-    result = []
-
-    for field in resp['hits']['hits']:
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions": result}
+    return {"actions": get_result(resp)}
 
 def seeking_actions_last_days(account_name, last_days,es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
@@ -115,15 +108,7 @@ def seeking_actions_last_days(account_name, last_days,es_index):
     if len(resp) == 0:
         return None
 
-    result = []
-
-    for field in resp['hits']['hits']:
-
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions": result}
+    return {"actions": get_result(resp)}
 
 def seeking_actions(account_name, pos, offset, es_index):
     if pos == -1 and offset == -1:
@@ -167,14 +152,7 @@ def seeking_actions(account_name, pos, offset, es_index):
     if len(resp) == 0:
         return None
 
-    result = []
-
-    for field in resp['hits']['hits']:
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions":result}
+    return {"actions": get_result(resp)}
 
 def seeking_actions_to_from(account_name, from_date, to_date, es_index):
 
@@ -205,14 +183,7 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
     if len(resp) == 0:
         return None
 
-    result = []
-
-    for field in resp['hits']['hits']:
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions": result}
+    return {"actions": get_result(resp)}
 
 def seeking_actions_last(account_name,last,es_index):
 
@@ -237,14 +208,7 @@ def seeking_actions_last(account_name,last,es_index):
     if len(resp) == 0:
         return None
 
-    result = []
-
-    for field in resp['hits']['hits']:
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions": result}
+    return {"actions": get_result(resp)}
 
 def seeking_actions_last_days_action_filtered(account_name, last_days,action_name, es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
@@ -264,15 +228,7 @@ def seeking_actions_last_days_action_filtered(account_name, last_days,action_nam
     if len(resp) == 0:
         return None
 
-    result = []
-
-    for field in resp['hits']['hits']:
-
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions": result}
+    return {"actions": get_result(resp)}
 
 def seeking_actions_last_days_contract_filtered(account_name, last_days,contract, es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
@@ -292,18 +248,18 @@ def seeking_actions_last_days_contract_filtered(account_name, last_days,contract
     if len(resp) == 0:
         return None
 
+    return {"actions": get_result(resp)}
+
+
+def get_result(resp):
     result = []
-
+    cache = []
     for field in resp['hits']['hits']:
-        field['_source']['act']['data'] = json.loads(
-            field['_source']['act']['data'])
-        result.append(field['_source'])
-
-    return {"actions": result}
-
-
-
-
+        if field['_source']['receipt']['act_digest'] not in cache:
+            field['_source']['act']['data'] = json.loads(field['_source']['act']['data'])
+            result.append(field['_source'])
+            cache.append(field['_source']['receipt']['act_digest'])
+    return result
 
 
 if __name__ == '__main__':
