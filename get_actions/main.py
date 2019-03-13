@@ -54,7 +54,7 @@ def get_actions():
         seeking_result = seeking_actions_last_days(account_name, str(last_days), elasticIndex)
     elif last != None:
         seeking_result = seeking_actions_last(account_name, str(last), elasticIndex)
-    elif from_date != None and to_date != None:
+    elif from_date != None:
         seeking_result = seeking_actions_to_from(account_name,from_date,to_date, elasticIndex)
     elif pos == None and offset == None and last_days == None and from_date == None and to_date== None:
         seeking_result = seeking_actions_account_name(account_name, elasticIndex)
@@ -160,7 +160,10 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
         es_from_date = datetime.datetime.utcfromtimestamp(from_date).strftime('%Y-%m-%dT%H:%M:%SZ')
     else:
         es_from_date = from_date
-    if isinstance(to_date, int):
+
+    if to_date == None:
+        es_to_date = "now"
+    elif isinstance(to_date, int):
         es_to_date = datetime.datetime.utcfromtimestamp(to_date).strftime('%Y-%m-%dT%H:%M:%SZ')
     else:
         es_to_date = to_date
