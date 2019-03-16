@@ -127,6 +127,8 @@ def seeking_actions(account_name, pos, offset, es_index):
         offset = 1
         sortColumn = "block_num"
     elif 0 <= pos and 0 <= offset:
+        if offset == 0:
+            offset+=1
         sortOrder = 'asc'
         sortColumn = "block_num"
     else: return None
@@ -243,7 +245,7 @@ def seeking_actions_last_days_contract_filtered(account_name, last_days,contract
                                   {"match_phrase": {"act.authorization.actor": account_name}}],"minimum_should_match": 1}},
                               {"bool": {"should": [{
                                  "match_phrase": {"receipt.receiver": account_name}}],"minimum_should_match": 1}}
-                                                ],"minimum_should_match": 1}}]}},
+                                              ],"minimum_should_match": 1}}]}},
             "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
                          }
                          )
