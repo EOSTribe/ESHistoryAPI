@@ -23,6 +23,8 @@ def get_key_accounts():
         elasticIndex = "bos_accounts*"
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
         elasticIndex = "telos_accounts*"
+    elif request.headers['X-Forwarded-Host'] == 'api.meetone.eostribe.io':
+        elasticIndex = "meetone_accounts*"
     else:
         elasticIndex = "accounts*"
 

@@ -24,6 +24,8 @@ def find_actions():
       elasticIndex = "bos_action_traces*"
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
       elasticIndex = "telos_action_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.meetone.eostribe.io':
+      elasticIndex = "meetone_action_traces*"
     else:
       elasticIndex = "action_traces*"
 

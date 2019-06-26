@@ -23,6 +23,8 @@ def get_transaction():
         elasticIndex = "bos_transaction_traces*"
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
         elasticIndex = "telos_transaction_traces*"
+    elif request.headers['X-Forwarded-Host'] == 'api.meetone.eostribe.io':
+        elasticIndex = "meetone_transaction_traces*"
     else:
         elasticIndex = "transaction_traces*"
 
