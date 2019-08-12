@@ -19,7 +19,7 @@ services:
     volumes:
         - .:/src
   get_actions_v2:
-    build: ./get_actions
+    build: ./get_actions_v2
     env_file:
         - ./config/.env
     ports:
