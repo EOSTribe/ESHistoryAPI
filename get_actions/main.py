@@ -15,8 +15,10 @@ ELASTIC_HOST = os.environ['ELASTIC_HOST']
 ELASTIC_PORT = os.environ['ELASTIC_PORT']
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
-@app.route('/v1/history/get_actions', methods=['POST','OPTIONS','GET'])
-@app.route('/v2/history/get_actions', methods=['POST','OPTIONS','GET'])
+
+
+@app.route('/v1/history/get_actions', methods=['POST', 'OPTIONS', 'GET'])
+@app.route('/v2/history/get_actions', methods=['POST', 'OPTIONS', 'GET'])
 @cross_origin()
 def get_actions():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
