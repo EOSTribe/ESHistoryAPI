@@ -22,7 +22,7 @@ def get_actions():
     if account_name == None:
         return 404
     position = -1
-    offset = -200
+    offset = -100
     # offset = int(request.get('offset'))
     # position = int(request.get('pos'))
     # Form the default endpoint path
