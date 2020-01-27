@@ -10,30 +10,31 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-ELASTIC_HOST = os.environ['ELASTIC_HOST']
-ELASTIC_PORT = os.environ['ELASTIC_PORT']
+ELASTIC_HOST = os.environ.get('ELASTIC_HOST',"es-test.eostribe.io")
+ELASTIC_PORT = os.environ.get('ELASTIC_PORT',"9200")
 client = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}], timeout=30)
 
 @app.route('/v1/history/find_actions',methods=['POST','OPTIONS','GET'])
 @app.route('/v2/history/find_actions',methods=['POST','OPTIONS','GET'])
-@cross_origin()
+# @cross_origin()
 def find_actions():
     if request.headers['X-Forwarded-Host'] == 'api.worbli.eostribe.io':
-       elasticIndex = "worbli_action_traces*"
+       elasticIndex = "worbli-mainet-actions*"
     elif request.headers['X-Forwarded-Host'] == 'api.bos.eostribe.io':
-      elasticIndex = "bos_action_traces*"
+      elasticIndex = "bos-mainet-actions*"
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
-      elasticIndex = "telos_action_traces*"
+      elasticIndex = "telos-mainet-actions*"
     elif request.headers['X-Forwarded-Host'] == 'api.meetone.eostribe.io':
-      elasticIndex = "meetone_action_traces*"
+      elasticIndex = "meetone-mainet-actions*"
     else:
-      elasticIndex = "action_traces*"
+      elasticIndex = "mainet-actions*"
 
+    data = request.get_json(force=True).get('data')
     last_days = request.get_json(force=True).get('last_days')
     last = request.get_json(force=True).get('last')
     from_date = request.get_json(force=True).get('from_date')
     to_date =  request.get_json(force=True).get('to_date')
-    data = request.get_json(force=True).get('data')
+
 
     if data == None:
         return ('', 204)
@@ -86,7 +87,7 @@ def seeking_actions_last_days(data, last_days,es_index):
                                          "match_phrase":{
                                              "act.data": data}}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-" + last_days + "d/d", "lte": "now/d"}}}
+                                         {"range": {"block_timestamp": {"gte": "now-" + last_days + "d/d", "lte": "now/d"}}}
                                      ]
                                  }},
                              "timeout": '20s'
@@ -123,11 +124,11 @@ def seeking_actions_to_from(data, from_date, to_date, es_index):
                                          {"match_phrase":
                                               {"act.data": data}}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": es_from_date, "lte": es_to_date}}}
+                                         {"range": {"block_timestamp": {"gte": es_from_date, "lte": es_to_date}}}
                                      ]
                                  }},
                              "sort": [
-                                 {"block_time": {"order": "desc"}}
+                                 {"block_timestamp": {"order": "desc"}}
                              ],
                              "timeout": "20s"
                          }
@@ -159,11 +160,11 @@ def seeking_actions_last(data,last,es_index):
                                             "act.data":{
                                                 "query": data}}}],
                                      "filter": [
-                                         {"range": {"block_time": {"gte": "now-"+last, "lte":"now"}}}
+                                         {"range": {"block_timestamp": {"gte": "now-"+last, "lte":"now"}}}
                                      ]
                                  }},
                              "sort": [
-                                 {"block_time": {"order": "asc"}}],
+                                 {"block_timestamp": {"order": "asc"}}],
                              "timeout": "90s"
                          }
                          )

@@ -30,7 +30,7 @@ def get_actions():
     elif request.headers['X-Forwarded-Host'] == 'api.telos.eostribe.io':
         elasticIndex = "telos_action_traces*"
     else:
-        elasticIndex = "action_traces*"
+        elasticIndex = "mainet-actions*"
 
     pos = request.get_json(force=True).get('pos')
 
@@ -84,7 +84,7 @@ def seeking_actions_account_name(account_name, es_index):
 		                      {"bool":{"should":[{"match_phrase":
 		                        {"receipt.receiver":account_name}}],"minimum_should_match":1}}],
                            "minimum_should_match":1}}]}},
-                    "sort": [{"block_time": {"order": "desc"}}],
+                    "sort": [{"block_timestamp": {"order": "desc"}}],
                     "timeout": "10s"
                     }
                 )
@@ -99,14 +99,14 @@ def seeking_actions_last_days(account_name, last_days,es_index):
         body={
           "query":{"bool":{
 	          "must":[
-                  {"range":{"block_time":{"gte":"now-"+str(last_days)+"d","lte":"now"}}}],
+                  {"range":{"block_timestamp":{"gte":"now-"+str(last_days)+"d","lte":"now"}}}],
 	          "filter":[{"bool":
 		             {"should":[
                          {"bool":{"should":[{"match_phrase":
 		                    {"act.authorization.actor":account_name}}],"minimum_should_match":1}},
 		                 {"bool":{"should":[{"match_phrase":
 		                   {"receipt.receiver":account_name}}],"minimum_should_match":1}}],"minimum_should_match":1}}]}},
-        "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
+        "sort": [{"block_timestamp": {"order": "asc"}}],"timeout": "20s"
             })
 
     if len(resp) == 0:
@@ -179,14 +179,14 @@ def seeking_actions_to_from(account_name, from_date, to_date, es_index):
             "query":{"bool":{
 	          "must":[
 		        {"range":{
-		           "block_time":{"gte":es_from_date,"lte":es_to_date}}}],
+		           "block_timestamp":{"gte":es_from_date,"lte":es_to_date}}}],
 	                "filter":[{"bool":
 		             {"should":[{"bool":
 		              {"should":[{"match_phrase":
 		               {"act.authorization.actor":account_name}}],"minimum_should_match":1}},
 		              {"bool":{"should":[{"match_phrase":
 		               {"receipt.receiver":account_name}}],"minimum_should_match":1}}],"minimum_should_match":1}}]}},
-             "sort": [{"block_time": {"order": "desc"}}],"timeout": "20s"
+             "sort": [{"block_timestamp": {"order": "desc"}}],"timeout": "20s"
             })
 
     if len(resp) == 0:
@@ -204,7 +204,7 @@ def seeking_actions_last(account_name,last,es_index):
           "query":{"bool":{
 	          "must":[
 		        {"range":{
-		           "block_time":{"gte":"now-"+last,"lte":"now"}}}],
+		           "block_timestamp":{"gte":"now-"+last,"lte":"now"}}}],
 	                "filter":[{"bool":
 		             {"should":[{"bool":
 		              {"should":[{"match_phrase":
@@ -212,7 +212,7 @@ def seeking_actions_last(account_name,last,es_index):
 		              {"bool":{"should":[{"match_phrase":
 		               {"receipt.receiver":account_name}}],"minimum_should_match":1}}],"minimum_should_match":1}}]}},
                              "sort": [
-                                 {"block_time": {"order": "asc"}}],"timeout": "90s"})
+                                 {"block_timestamp": {"order": "asc"}}],"timeout": "90s"})
 
     if len(resp) == 0:
         return None
@@ -223,7 +223,7 @@ def seeking_actions_last_days_action_filtered(account_name, last_days,action_nam
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
         body={
            "query": {"bool": {"must": [
-                   {"range": {"block_time": {"gte": "now-"+str(last_days)+"d", "lte": "now"}}},
+                   {"range": {"block_timestamp": {"gte": "now-"+str(last_days)+"d", "lte": "now"}}},
                    {"match_phrase": {"act.name": {"query": action_name}}}],
                 "filter": [{"bool": {"should": [
                               {"bool": {"should": [
@@ -231,7 +231,7 @@ def seeking_actions_last_days_action_filtered(account_name, last_days,action_nam
                               {"bool": {"should": [{
                                  "match_phrase": {"receipt.receiver": account_name}}],"minimum_should_match": 1}}
                                                 ],"minimum_should_match": 1}}]}},
-            "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
+            "sort": [{"block_timestamp": {"order": "asc"}}],"timeout": "20s"
         })
 
     if len(resp) == 0:
@@ -242,7 +242,7 @@ def seeking_actions_last_days_action_filtered(account_name, last_days,action_nam
 def seeking_actions_last_days_contract_filtered(account_name, last_days,contract, es_index):
     resp = client.search(index=es_index, filter_path=['hits.hits._*'], size = 10000,
         body={"query": {"bool": {"must": [
-                   {"range": {"block_time": {"gte": "now-"+str(last_days)+"d", "lte": "now"}}},
+                   {"range": {"block_timestamp": {"gte": "now-"+str(last_days)+"d", "lte": "now"}}},
                    {"match_phrase": {"act.account": {"query": contract}}}],
                 "filter": [{"bool": {"should": [
                               {"bool": {"should": [
@@ -250,7 +250,7 @@ def seeking_actions_last_days_contract_filtered(account_name, last_days,contract
                               {"bool": {"should": [{
                                  "match_phrase": {"receipt.receiver": account_name}}],"minimum_should_match": 1}}
                                               ],"minimum_should_match": 1}}]}},
-            "sort": [{"block_time": {"order": "asc"}}],"timeout": "20s"
+            "sort": [{"block_timestamp": {"order": "asc"}}],"timeout": "20s"
                          }
                          )
 

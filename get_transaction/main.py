@@ -26,7 +26,7 @@ def get_transaction():
     elif request.headers['X-Forwarded-Host'] == 'api.meetone.eostribe.io':
         elasticIndex = "meetone_transaction_traces*"
     else:
-        elasticIndex = "transaction_traces*"
+        elasticIndex = "mainet-transaction*"
 
     transaction_id = request.get_json(force=True).get('id')
 

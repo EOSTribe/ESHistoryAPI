@@ -37,15 +37,19 @@ def get_actions():
     jsonResponse = json.loads(r.text)
     actions = jsonResponse['actions']
     actionsTransfer = []
+    dedup = []
     for action in actions:
-        if action['action_trace']['act']['name'] == "transfer":
-            temp = {}
-            temp['act'] = {}
-            temp['act']['data'] = action['action_trace']['act']['data']
-            temp['block_time'] = action['block_time']
-            temp['act']['name'] = action['action_trace']['act']['name']
-            temp['act']['account'] = action['action_trace']['act']['account']
-            actionsTransfer.append(temp)
+        trx_id = action['action_trace']['trx_id']
+        if trx_id not in dedup:
+            if action['action_trace']['act']['name'] == "transfer":
+                temp = {}
+                temp['act'] = {}
+                temp['act']['data'] = action['action_trace']['act']['data']
+                temp['block_time'] = action['block_time']
+                temp['act']['name'] = action['action_trace']['act']['name']
+                temp['act']['account'] = action['action_trace']['act']['account']
+                dedup.append(action['action_trace']['trx_id'])
+                actionsTransfer.append(temp)
 
     response = {"actions": actionsTransfer}
     # Return response
